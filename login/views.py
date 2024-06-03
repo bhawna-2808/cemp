@@ -8,6 +8,8 @@ import os
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.urls import reverse
+from rest_framework.views import APIView
+from login.ai import *
 
 class AddDocumentAPIView(CreateAPIView):
     def create(self, request, *args, **kwargs):
@@ -28,13 +30,18 @@ class AddDocumentAPIView(CreateAPIView):
                 path = default_storage.save(file_path, ContentFile(file.read()))
                 # Generate the URL for the saved file
                 file_url = request.build_absolute_uri(settings.MEDIA_URL + 'uploaded_files/' + file.name)
+                
+                # Generate the URL for editing the file
+                edit_url = request.build_absolute_uri(reverse('edit-file', kwargs={'file_name': file.name}))
+                
                 # Collect file details
                 file_details.append({
                     'filename': file.name,
                     'size': file.size,
                     'content_type': file.content_type,
                     'path': path,  # Optional: Return the path where the file is saved,
-                    'url':file_url
+                    'url':file_url,
+                    'edit_url':edit_url
                     
                 })
 
@@ -61,3 +68,29 @@ def file_list_view(request):
             })
 
     return JsonResponse({'files': files})
+
+
+
+class EditDocumentView(APIView):
+    def get(self, request, file_name, *args, **kwargs):
+        try:
+            # Load the document (e.g., DOCX)
+            document = load_document(file_name)
+            print(document)
+
+            # Preprocess the document as needed
+            preprocessed_document = preprocess_document(document)
+            print(preprocess_document)
+            
+            # # Apply AI editing
+            # edited_text = self.apply_ai_editing(preprocessed_document)
+
+            # # Postprocess the edited text
+            # processed_text = self.postprocess_text(edited_text)
+
+            # # Save the edited document
+            # self.save_edited_document(processed_text, file_name)
+
+            return Response({"message": "Document edited successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
