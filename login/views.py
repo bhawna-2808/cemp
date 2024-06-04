@@ -12,16 +12,16 @@ from rest_framework.views import APIView
 from login.ai import *
 import pytesseract
 from PIL import Image
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfFileReader, PdfReader
 from docx import Document
 
 
-class AddDocumentAPIView(CreateAPIView):
-    def create(self, request, *args, **kwargs):
+class AddDocumentAPIView(APIView):
+    def post(self, request, *args, **kwargs):
         try:
             files = request.FILES.getlist('files')
             file_details = []
-    
+
             # Define the directory where you want to save the files
             upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploaded_files')
             if not os.path.exists(upload_dir):
@@ -38,14 +38,14 @@ class AddDocumentAPIView(CreateAPIView):
                 
                 # Generate the URL for editing the file
                 edit_url = request.build_absolute_uri(reverse('edit-file', kwargs={'file_name': file.name}))
-                
+
                 # Extract text based on file type
                 text = ""
                 if file.content_type == 'application/pdf':
                     # Extract text from PDF
-                    reader = PdfFileReader(file)
-                    for page_num in range(reader.numPages):
-                        text += reader.getPage(page_num).extract_text()
+                    reader = PdfReader(file)
+                    for page in reader.pages:
+                        text += page.extract_text()
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     # Extract text from DOCX
                     doc = Document(file)
@@ -70,7 +70,7 @@ class AddDocumentAPIView(CreateAPIView):
                     'edit_url': edit_url,
                     'text': text
                 })
-             
+
             # Generate the URL for the file list view
             file_list_url = request.build_absolute_uri(reverse('file-list'))
             return Response({"message": "files generated successfully", "files": file_details, "file_list_url": file_list_url}, status=status.HTTP_201_CREATED)
