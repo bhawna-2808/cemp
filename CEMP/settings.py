@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'login',
     'rest_framework',
-    'ckeditor'
+    'ckeditor'  
 ]
 
 CKEDITOR_BASEPATH = "/my_static/ckeditor/ckeditor/"
