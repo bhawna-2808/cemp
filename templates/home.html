@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Whole Page Editing</title>
+    {% load static %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+
+    <script src="{% static 'ckeditor/ckeditor.js' %}"></script>
+</head>
+<body>
+    <textarea id="editor1"></textarea>
+    <script>
+        ClassicEditor
+            .create( document.getElementById( 'editor1' ) )
+            .then( editor => {
+                console.log( 'Editor is ready.' );
+            } )
+            .catch( error => {
+                console.error( error );
+            } );
+    </script>
+    <script>
+    $(document).ready(function(){
+        CKEDITOR.replace('editor1');
+       
+    });
+
+</script>
+</body>
+</html>

@@ -75,22 +75,15 @@ class EditDocumentView(APIView):
     def get(self, request, file_name, *args, **kwargs):
         try:
             # Load the document (e.g., DOCX)
-            document = load_document(file_name)
+            document, type_of_file = load_document(file_name)
             print(document)
-
-            # Preprocess the document as needed
-            preprocessed_document = preprocess_document(document)
-            print(preprocess_document)
-            
-            # # Apply AI editing
-            # edited_text = self.apply_ai_editing(preprocessed_document)
-
-            # # Postprocess the edited text
-            # processed_text = self.postprocess_text(edited_text)
-
-            # # Save the edited document
-            # self.save_edited_document(processed_text, file_name)
-
+            print(type_of_file)
             return Response({"message": "Document edited successfully"}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+def home(request):
+    return render(request, 'home.html')
