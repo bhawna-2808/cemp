@@ -74,7 +74,8 @@ class AddDocumentAPIView(APIView):
             file_list_url = request.build_absolute_uri(reverse('file-list'))
             return Response({"message": "Files generated successfully", "files": file_details, "file_list_url": file_list_url}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            logger.exception('An error occurred while processing files.')
+            logger.error(e)
+            # logger.exception('An error occurred while processing files.')
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def extract_text_from_pdf(self, file):
