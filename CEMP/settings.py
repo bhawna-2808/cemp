@@ -92,7 +92,12 @@ DATABASES = {
 }
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600 * 900  # 90,000 MB in bytes
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1047527424  # Optional, for additional safety
 
+FILE_UPLOAD_HANDLERS = [
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
