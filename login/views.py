@@ -13,7 +13,9 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 
-pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = '/user/bin/tesseract'
+
 
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
