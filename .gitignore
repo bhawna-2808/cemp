@@ -11,3 +11,4 @@ __pycache__/*
 media/
 env/
 .DS_Store
+uploaded_files/

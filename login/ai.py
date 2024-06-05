@@ -1,6 +1,7 @@
 import os
 from django.conf import settings
 import filetype
+import cv2
 
 def load_document(file_name):
     file_path = os.path.join(settings.MEDIA_ROOT, 'uploaded_files', file_name)
@@ -15,15 +16,28 @@ def load_document(file_name):
     except Exception as e:
         return None, str(e)  # Catch other potential errors
 
-# def preprocess_document(document):
-#     # Implement preprocessing tasks here
-#     # For example, you can clean up the document, remove unwanted characters,
-#     # or transform the data as needed
-    
-#     # For demonstration purposes, let's assume we want to convert the document content to lowercase
-#     preprocessed_document = document.lower()
-    
-#     return preprocessed_document
+def preprocess_image(image_path):
+    # Load the image using OpenCV
+        img = cv2.imread(image_path)
+        if img is None:
+            raise ValueError(f"Error reading image: {image_path}")
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # Enhance contrast using histogram equalization
+        enhanced_gray = cv2.equalizeHist(gray)
+
+        # Remove noise using a median blur
+        denoised = cv2.medianBlur(enhanced_gray, 3)
+
+        # Apply adaptive thresholding
+        binary = cv2.adaptiveThreshold(denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+        # Invert the binary image
+        inverted_binary = cv2.bitwise_not(binary)
+
+        return inverted_binary
 
 
 # # def apply_ai_editing(document):
