@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 import pytesseract
+from login import log  # Import the logging configuration
 
 # Specify the Tesseract executable path
 pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
