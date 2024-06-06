@@ -46,10 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'login',
     'rest_framework',
-    'ckeditor'  
 ]
 
-# CKEDITOR_BASEPATH = "/my_static/ckeditor/ckeditor/"
 REST_FRAMEWORK = {
     'DEBUG': True,
     # Other DRF settings
