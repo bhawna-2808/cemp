@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # pytesseract.pytesseract.tesseract_cmd = '/user/bin/tesseract'
 
 class AddDocumentAPIView(APIView):
-    def post(self, request, args, *kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             files = request.FILES.getlist('files')
             file_details = []
