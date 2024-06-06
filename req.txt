@@ -22,7 +22,7 @@ pdf2image==1.17.0
 pillow==10.3.0
 pydantic==2.7.2
 pydantic_core==2.18.3
-PyMuPDF==1.24.5
+PyMuPDF==1.24.4
 PyMuPDFb==1.24.3
 PyPDF2==3.0.1
 pytesseract==0.3.10
