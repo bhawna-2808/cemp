@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'ckeditor'  
 ]
 
-CKEDITOR_BASEPATH = "/my_static/ckeditor/ckeditor/"
+# CKEDITOR_BASEPATH = "/my_static/ckeditor/ckeditor/"
 
 
 MIDDLEWARE = [
@@ -92,8 +92,8 @@ DATABASES = {
     }
 }
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600 * 900  # 90,000 MB in bytes
-FILE_UPLOAD_MAX_MEMORY_SIZE = 1047527424  # Optional, for additional safety
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5368709120  # 90,000 MB in bytes
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5368709120  # Optional, for additional safety
 
 FILE_UPLOAD_HANDLERS = [
     "django.core.files.uploadhandler.MemoryFileUploadHandler",
