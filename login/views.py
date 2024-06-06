@@ -13,6 +13,8 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
+import django_dump_die as dd
+
 
 # Get logger instance
 logger = logging.getLogger(__name__)
@@ -43,7 +45,10 @@ class AddDocumentAPIView(APIView):
                 # Extract text based on file type
                 text = ""
                 if file.content_type == 'application/pdf':
+                    print("bbbbbb", file_path)
+                    dd("ddd")
                     text = self.extract_text_from_pdf(file_path)
+                    dd(text)
                     return Response({"message":text}, status=status.HTTP_201_CREATED)
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     text = self.extract_text_from_docx(file_path)
@@ -69,9 +74,10 @@ class AddDocumentAPIView(APIView):
 
     def extract_text_from_pdf(self, file_path):
         try:
+            
             pdf_document = fitz.open(file_path)
-            print(pdf_document)
-            return(pdf_document)
+            dd(file_path)
+            return Response({"message":pdf_document})
             text = ""
             for page_num in range(len(pdf_document)):
                 page = pdf_document.load_page(page_num)
