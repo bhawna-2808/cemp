@@ -16,8 +16,6 @@ import logging
 
 # Get logger instance
 logger = logging.getLogger(__name__)
-# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
-# pytesseract.pytesseract.tesseract_cmd = '/user/bin/tesseract'
 
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -68,11 +66,16 @@ class AddDocumentAPIView(APIView):
 
     def extract_text_from_pdf(self, file_path):
         try:
+            # Open the PDF file in a streaming mode
             pdf_document = fitz.open(file_path)
             text = ""
+
+            # Process each page of the PDF
             for page_num in range(len(pdf_document)):
                 page = pdf_document.load_page(page_num)
                 page_text = page.get_text()
+
+                # Extract text from images using OCR
                 image_list = page.get_images(full=True)
                 for img in image_list:
                     xref = img[0]
@@ -81,7 +84,14 @@ class AddDocumentAPIView(APIView):
                     image = Image.open(io.BytesIO(image_bytes))
                     image_text = pytesseract.image_to_string(image)
                     text += image_text + '\n\n'
+
+                # Append page text to the result
                 text += page_text.strip() + '\n\n'
+                
+                # Limit the number of pages processed to avoid memory issues
+                if page_num >= settings.MAX_PDF_PAGES:
+                    break
+
             return text.strip()
         except Exception as e:
             logger.error(e)
@@ -89,8 +99,11 @@ class AddDocumentAPIView(APIView):
 
     def extract_text_from_docx(self, file_path):
         try:
+            # Open the DOCX file
             text = ""
             doc = Document(file_path)
+
+            # Extract text from each paragraph
             for para in doc.paragraphs:
                 text += para.text + '\n'
             return text.strip()
@@ -100,7 +113,10 @@ class AddDocumentAPIView(APIView):
     
     def extract_text_from_image(self, file_path):
         try:
+            # Open the image file
             image = Image.open(file_path)
+
+            # Use OCR to extract text from the image
             text = pytesseract.image_to_string(image)
             return text.strip()
         except Exception as e:
@@ -108,6 +124,7 @@ class AddDocumentAPIView(APIView):
             return f'Error extracting text from image: {str(e)}'    
 
 def file_list_view(request):
+    # Retrieve the list of uploaded files
     upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploaded_files')
     files = []
     for filename in os.listdir(upload_dir):
