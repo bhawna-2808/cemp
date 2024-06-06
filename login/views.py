@@ -42,16 +42,16 @@ class AddDocumentAPIView(APIView):
                 
                 # Extract text based on file type
                 text = ""
-                return Response({"message": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
                 if file.content_type == 'application/pdf':
                     text = self.extract_text_from_pdf(file_path)
+                    return Response({'message':text})
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     text = self.extract_text_from_docx(file_path)
                 elif file.content_type.startswith('image/'):
                     text = self.extract_text_from_image(file_path)    
                 else:
                     text = 'Unsupported file type for text extraction.'
-
+                
                 file_details.append({
                     'filename': file.name,
                     'size': file.size,
@@ -70,6 +70,8 @@ class AddDocumentAPIView(APIView):
     def extract_text_from_pdf(self, file_path):
         try:
             pdf_document = fitz.open(file_path)
+            print(pdf_document)
+            return(pdf_document)
             text = ""
             for page_num in range(len(pdf_document)):
                 page = pdf_document.load_page(page_num)
