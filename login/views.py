@@ -14,6 +14,9 @@ from rest_framework.views import APIView
 from docx import Document
 import logging
 from pprint import pprint
+from io import BytesIO
+
+
 
 # Get logger instance
 logger = logging.getLogger(__name__)
@@ -30,23 +33,26 @@ class AddDocumentAPIView(APIView):
             upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploaded_files')
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
-
+ 
             for file in files:
+                pdf_stream = BytesIO(file.read())
+
                 # Save the file in chunks
                 file_path = os.path.join(upload_dir, file.name)
                 with default_storage.open(file_path, 'wb+') as destination:
                     for chunk in file.chunks():
                         destination.write(chunk)
-
+                
                 # Generate the URL for the saved file
                 file_url = request.build_absolute_uri(settings.MEDIA_URL + 'uploaded_files/' + file.name)
+              
                 
                 # Extract text based on file type
                 text = ""
                 if file.content_type == 'application/pdf':
                     print("bbbbbb", file_path)
                     pprint(file_path)
-                    text = self.extract_text_from_pdf(file_path)
+                    text = self.extract_text_from_pdf(pdf_stream)
                     return Response({"message":text}, status=status.HTTP_201_CREATED)
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     text = self.extract_text_from_docx(file_path)
@@ -70,10 +76,9 @@ class AddDocumentAPIView(APIView):
             logger.error(e)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    def extract_text_from_pdf(self, file_path):
-        try:
-            
-            pdf_document = fitz.open(file_path)
+    def extract_text_from_pdf(self,pdf_stream):
+        try: 
+            pdf_document = fitz.open(stream=pdf_stream, filetype="pdf")
             pprint(pdf_document)
             # return Response({"message":pdf_document})
             text = ""
