@@ -42,6 +42,7 @@ class AddDocumentAPIView(APIView):
                 
                 # Extract text based on file type
                 text = ""
+                return Response({"message": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
                 if file.content_type == 'application/pdf':
                     text = self.extract_text_from_pdf(file_path)
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
