@@ -17,7 +17,7 @@ from pprint import pprint
 
 # Get logger instance
 logger = logging.getLogger(__name__)
-pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 # pytesseract.pytesseract.tesseract_cmd = '/user/bin/tesseract'
 
 class AddDocumentAPIView(APIView):
