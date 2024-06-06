@@ -90,9 +90,10 @@ class AddDocumentAPIView(APIView):
 
                 # Append page text to the result
                 text += page_text.strip() + '\n\n'
-                
+                max_pages = getattr(settings, 'MAX_PDF_PAGES', 30)  # Default to 20 if MAX_PDF_PAGES is not defined
+
                 # Limit the number of pages processed to avoid memory issues
-                if page_num >= settings.MAX_PDF_PAGES:
+                if page_num >= max_pages:
                     break
 
             return text.strip()
