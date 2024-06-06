@@ -46,7 +46,7 @@ class AddDocumentAPIView(APIView):
                 text = ""
                 if file.content_type == 'application/pdf':
                     print("bbbbbb", file_path)
-                    dd("ddd")
+                    dump("ddd")
                     text = self.extract_text_from_pdf(file_path)
                     dd(text)
                     return Response({"message":text}, status=status.HTTP_201_CREATED)
@@ -76,6 +76,7 @@ class AddDocumentAPIView(APIView):
         try:
             
             pdf_document = fitz.open(file_path)
+            print(pdf_document)
             dd(file_path)
             return Response({"message":pdf_document})
             text = ""
