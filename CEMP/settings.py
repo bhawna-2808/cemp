@@ -50,7 +50,10 @@ INSTALLED_APPS = [
 ]
 
 # CKEDITOR_BASEPATH = "/my_static/ckeditor/ckeditor/"
-
+REST_FRAMEWORK = {
+    'DEBUG': True,
+    # Other DRF settings
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
