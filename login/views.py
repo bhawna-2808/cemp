@@ -13,12 +13,11 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
-import django_dump_die as dd
-
+from pprint import pprint
 
 # Get logger instance
 logger = logging.getLogger(__name__)
-# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 # pytesseract.pytesseract.tesseract_cmd = '/user/bin/tesseract'
 
 class AddDocumentAPIView(APIView):
@@ -46,6 +45,7 @@ class AddDocumentAPIView(APIView):
                 text = ""
                 if file.content_type == 'application/pdf':
                     print("bbbbbb", file_path)
+                    pprint(file_path)
                     text = self.extract_text_from_pdf(file_path)
                     return Response({"message":text}, status=status.HTTP_201_CREATED)
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
@@ -74,8 +74,8 @@ class AddDocumentAPIView(APIView):
         try:
             
             pdf_document = fitz.open(file_path)
-            print(pdf_document)
-            return Response({"message":pdf_document})
+            pprint(pdf_document)
+            # return Response({"message":pdf_document})
             text = ""
             for page_num in range(len(pdf_document)):
                 page = pdf_document.load_page(page_num)
