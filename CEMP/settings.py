@@ -155,6 +155,7 @@ DATABASES = {
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5368709120  # 90,000 MB in bytes
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5368709120  # Optional, for additional safety
+MAX_UPLOAD_SIZE = 943718400 
 
 FILE_UPLOAD_HANDLERS = [
     "django.core.files.uploadhandler.MemoryFileUploadHandler",
