@@ -44,7 +44,7 @@ class AddDocumentAPIView(APIView):
                 text = ""
                 if file.content_type == 'application/pdf':
                     text = self.extract_text_from_pdf(file_path)
-                    return Response({'message':text})
+                    return Response({"message":text}, status=status.HTTP_201_CREATED)
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     text = self.extract_text_from_docx(file_path)
                 elif file.content_type.startswith('image/'):
