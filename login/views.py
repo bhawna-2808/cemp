@@ -16,7 +16,7 @@ import logging
 from pprint import pprint
 from io import BytesIO
 
-
+from PyPDF2 import PdfReader
 
 # Get logger instance
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class AddDocumentAPIView(APIView):
                 if file.content_type == 'application/pdf':
                     print("bbbbbb", file_path)
                     pprint(file_path)
-                    text = self.extract_text_from_pdf(pdf_stream)
+                    text = self.extract_text_from_pdf(file_path)
                     return Response({"message":text}, status=status.HTTP_201_CREATED)
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     text = self.extract_text_from_docx(file_path)
@@ -76,23 +76,26 @@ class AddDocumentAPIView(APIView):
             logger.error(e)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    def extract_text_from_pdf(self,pdf_stream):
+    def extract_text_from_pdf(self,file_path):
         try: 
-            pdf_document = fitz.open(stream=pdf_stream, filetype="pdf")
-            pprint(pdf_document)
+            pdf_document = PdfReader(file_path)
+            number_of_pages = len(pdf_document.pages)
+            print(number_of_pages)
+           
             # return Response({"message":pdf_document})
             text = ""
-            for page_num in range(len(pdf_document)):
-                page = pdf_document.load_page(page_num)
-                page_text = page.get_text()
-                image_list = page.get_images(full=True)
-                for img in image_list:
-                    xref = img[0]
-                    base_image = pdf_document.extract_image(xref)
-                    image_bytes = base_image["image"]
-                    image = Image.open(io.BytesIO(image_bytes))
-                    image_text = pytesseract.image_to_string(image)
-                    text += image_text + '\n\n'
+            for i in range(number_of_pages):
+                page = pdf_document.pages[i]
+                print(page)
+                page_text = page.extract_text()
+                # image_list = page.get_images(full=True)
+                # for img in image_list:
+                #     xref = img[0]
+                #     base_image = pdf_document.extract_image(xref)
+                #     image_bytes = base_image["image"]
+                #     image = Image.open(io.BytesIO(image_bytes))
+                #     image_text = pytesseract.image_to_string(image)
+                #     text += image_text + '\n\n'
                 text += page_text.strip() + '\n\n'
             return text.strip()
         except Exception as e:
