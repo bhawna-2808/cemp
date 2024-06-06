@@ -106,6 +106,7 @@ class AddDocumentAPIView(APIView):
 
             return text.strip()
         except Exception as e:
+            logger.error(e)
             return f'Error extracting text from PDF: {str(e)}'
 
     def extract_text_from_docx(self, file):
@@ -129,6 +130,7 @@ class AddDocumentAPIView(APIView):
 
             return text.strip()
         except Exception as e:
+            logger.error(e)
             return f'Error extracting text from image: {str(e)}'    
     
 def file_list_view(request):
