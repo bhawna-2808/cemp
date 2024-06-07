@@ -14,7 +14,7 @@ from docx import Document
 import logging
 from io import BytesIO
 from PyPDF2 import PdfReader  # Import PdfReader instead of PdfFileReader
-import re
+
 # Set up logging
 logger = logging.getLogger(__name__)
 # pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract' 
@@ -67,11 +67,11 @@ class AddDocumentAPIView(APIView):
             logger.error(e)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    def extract_text_from_pdf(self, file_path):
+    def extract_text_from_pdf(self,file_path):
         try:
+            text = ""
             logger.info(f"Extracting text from PDF file: {file_path}")
-            lines = []
-
+            
             # Open the PDF file using PyMuPDF
             pdf_document = fitz.open(file_path)
             
@@ -80,42 +80,27 @@ class AddDocumentAPIView(APIView):
                 page = pdf_document.load_page(page_num)
                 page_text = page.get_text()
                 
-                # Process page text line by line
-                for line in page_text.splitlines():
-                    # Remove special characters using regex
-                    clean_line = re.sub(r'[^\w\s]', '', line)
-                    # Add line to list if not empty
-                    if clean_line.strip():
-                        lines.append(clean_line.strip())
-                
                 # Extract text from images using OCR
                 image_list = page.get_images(full=True)
-                for img_index, img in enumerate(image_list):
+                for img in image_list:
                     xref = img[0]
                     base_image = pdf_document.extract_image(xref)
                     image_bytes = base_image["image"]
                     image = Image.open(io.BytesIO(image_bytes))
                     image_text = pytesseract.image_to_string(image)
-                    
-                    # Process image text line by line
-                    for line in image_text.splitlines():
-                        # Remove special characters using regex
-                        clean_line = re.sub(r'[^\w\s]', '', line)
-                        # Add line to list if not empty
-                        if clean_line.strip():
-                            lines.append(clean_line.strip())
-                    
-                    # Log progress of image extraction
-                    logger.info(f"Extracted text from image {img_index + 1} on page {page_num + 1}")
+                    text += image_text.strip() + '\n'
                 
-                # Log progress of page processing
+                # Append page text to the result
+                text += page_text.strip() + '\n'
+                
+                # Log progress
                 logger.info(f"Processed page {page_num + 1} of {len(pdf_document)}")
             
             logger.info("Text extraction from PDF successful.")
-            return lines
+            return text.strip()
         except Exception as e:
             logger.error(f"Error extracting text from PDF: {str(e)}")
-            return [f'Error extracting text from PDF: {str(e)}']
+            return f'Error extracting text from PDF: {str(e)}'
 
 
     def extract_text_from_docx(self, file_path):
