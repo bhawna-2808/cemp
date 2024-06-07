@@ -12,11 +12,12 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from io import BytesIO
+from PyPDF2 import PdfReader  # Import PdfReader instead of PdfFileReader
 
 # Set up logging
 logger = logging.getLogger(__name__)
-# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'  # Update the path based on your server configuration
+pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract' 
 
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -65,56 +66,41 @@ class AddDocumentAPIView(APIView):
             logger.error(e)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    def extract_text_from_pdf(self, file_path, batch_size=10):
+    def extract_text_from_pdf(self, file_path):
         try:
+            text = ""
+            logger.info(f"Extracting text from PDF file: {file_path}")
+            
+            # Open the PDF file using PyMuPDF
             pdf_document = fitz.open(file_path)
-            num_pages = len(pdf_document)
-            text_results = []
-
-            def process_page(page_num):
-                try:
-                    page = pdf_document.load_page(page_num)
-                    page_text = page.get_text()
-
-                    # Extract text from images using OCR
-                    image_list = page.get_images(full=True)
-                    image_text = ""
-                    for img in image_list:
-                        xref = img[0]
-                        base_image = pdf_document.extract_image(xref)
-                        image_bytes = base_image["image"]
-                        image = Image.open(io.BytesIO(image_bytes))
-                        image_text += pytesseract.image_to_string(image) + '\n\n'
-
-                    # Combine page text and image text
-                    combined_text = image_text + page_text.strip() + '\n\n'
-
-                    logger.info(f"Processed page {page_num + 1} of {num_pages}")
-                    return combined_text
-                except Exception as e:
-                    logger.error(f"Error processing page {page_num + 1}: {e}")
-                    return f"Error processing page {page_num + 1}: {str(e)}\n\n"
-
-            # Process pages in batches
-            for start_page in range(0, num_pages, batch_size):
-                end_page = min(start_page + batch_size, num_pages)
-                batch_results = []
-                with ThreadPoolExecutor() as executor:
-                    futures = [executor.submit(process_page, page_num) for page_num in range(start_page, end_page)]
-                    for future in as_completed(futures):
-                        result = future.result()
-                        page_num = futures.index(future) + start_page
-                        batch_results.append((page_num, result))
+            
+            # Iterate over each page
+            for page_num in range(len(pdf_document)):
+                page = pdf_document.load_page(page_num)
+                page_text = page.get_text()
                 
-                # Sort the batch results by page number
-                batch_results.sort(key=lambda x: x[0])
-                for page_num, result in batch_results:
-                    text_results.append(result)
-
-            return ''.join(text_results).strip()
+                # Extract text from images using OCR
+                image_list = page.get_images(full=True)
+                for img in image_list:
+                    xref = img[0]
+                    base_image = pdf_document.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    image = Image.open(io.BytesIO(image_bytes))
+                    image_text = pytesseract.image_to_string(image)
+                    text += image_text + '\n\n'
+                
+                # Append page text to the result
+                text += page_text.strip() + '\n\n'
+                
+                # Log progress
+                logger.info(f"Processed page {page_num + 1} of {len(pdf_document)}")
+            
+            logger.info("Text extraction from PDF successful.")
+            return text.strip()
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error extracting text from PDF: {str(e)}")
             return f'Error extracting text from PDF: {str(e)}'
+
 
     def extract_text_from_docx(self, file_path):
         try:
