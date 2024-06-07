@@ -17,7 +17,7 @@ from PyPDF2 import PdfReader  # Import PdfReader instead of PdfFileReader
 import re
 # Set up logging
 logger = logging.getLogger(__name__)
-pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract' 
+# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract' 
 
 
 class AddDocumentAPIView(APIView):
