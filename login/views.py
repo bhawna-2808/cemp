@@ -51,14 +51,15 @@ class AddDocumentAPIView(APIView):
                     text = self.extract_text_from_image(file_path)
                 else:
                     text = 'Unsupported file type for text extraction.'
-
+                text1 = self.format_text_to_html_paragraphs(text)    
+                # text.replace('\n', '<br>')
                 file_details.append({
                     'filename': file.name,
                     'size': file.size,
                     'content_type': file.content_type,
                     'path': file_path,
                     'url': file_url,
-                    'text': text
+                    'text': text1
                 })
 
             file_list_url = request.build_absolute_uri(reverse('file-list'))
@@ -102,7 +103,22 @@ class AddDocumentAPIView(APIView):
             logger.error(f"Error extracting text from PDF: {str(e)}")
             return f'Error extracting text from PDF: {str(e)}'
 
-
+    def format_text_to_html_paragraphs(self,text):
+        """
+        This function takes a string with newline characters and replaces them with HTML tags for paragraphs and line breaks.
+        
+        Parameters:
+        text (str): The input string with newline characters.
+        
+        Returns:
+        str: The formatted string with HTML tags.
+        """
+        # Split the text by double newline characters to separate paragraphs
+        paragraphs = text.split('\n\n')
+        # Wrap each paragraph in <p> tags and replace single newlines with <br>
+        formatted_text = ''.join(f'<p>{paragraph.replace("\n", "<br>")}</p>' for paragraph in paragraphs)
+    
+        return formatted_text
     def extract_text_from_docx(self, file_path):
         try:
             text = ""
