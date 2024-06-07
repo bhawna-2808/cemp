@@ -117,8 +117,10 @@ class AddDocumentAPIView(APIView):
         # Split the text by double newline characters to separate paragraphs
         paragraphs = text.split('\n\n')
         # Wrap each paragraph in <p> tags and replace single newlines with <br>
-        formatted_text = ''.join(f'<p>{paragraph.replace("\n", "<br>")}</p>' for paragraph in paragraphs)
-    
+        formatted_text = ''.join('<p>{}</p>'.format(paragraph.replace("\n", "<br>")) for paragraph in paragraphs)
+
+        # formatted_text = ''.join(f'<p>{paragraph.replace("\n", "<br>")}</p>' for paragraph in paragraphs)
+    # 
         return formatted_text
     def extract_text_from_docx(self, file_path):
         try:
