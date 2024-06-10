@@ -26,7 +26,9 @@ class AddDocumentAPIView(APIView):
             file_details = []
 
             # Define the directory where you want to save the files
-            upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploaded_files')
+            upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
+
+            # upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploaded_files')
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
                 logger.info(f"Created directory: {upload_dir}")
