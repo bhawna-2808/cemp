@@ -12,6 +12,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
+import pypandoc
 
 
 # Set up logging
@@ -121,8 +122,21 @@ class AddDocumentAPIView(APIView):
                 logger.error(f"File not found: {file_path}")
                 return f'File not found: {file_path}'
 
+            # Convert to absolute path
+            absolute_file_path = os.path.abspath(file_path)
+            logger.info(f"Using absolute path: {absolute_file_path}")
+
+            # Ensure the file is readable
+            if not os.access(absolute_file_path, os.R_OK):
+                logger.error(f"File is not readable: {absolute_file_path}")
+                return f'File is not readable: {absolute_file_path}'
+
             # Open the DOCX file
-            doc = Document(file_path)
+            try:
+                doc = Document(absolute_file_path)
+            except Exception as e:
+                logger.error(f"Error opening DOCX file with Document(): {str(e)}")
+                return f'Error opening DOCX file with Document(): {str(e)}'
 
             # Extract text from paragraphs
             text = ""
@@ -134,36 +148,6 @@ class AddDocumentAPIView(APIView):
         except Exception as e:
             logger.error(f"Error extracting text from DOCX: {str(e)}")
             return f'Error extracting text from DOCX: {str(e)}'
-
-
-    # def extract_text_from_doc(self, file_path):
-    #     try:
-    #         logger.info(f"Extracting text from DOC file: {file_path}")
-    #         text = ""
-    #         # Initialize COM objects (required for Windows applications)
-    #         pythoncom.CoInitialize()
-    #         word = Dispatch("Word.Application")
-    #         word.Visible = False
-    #         doc = word.Documents.Open(file_path)
-    #         text = doc.Content.Text
-    #         doc.Close()
-    #         word.Quit()
-    #         logger.info("Text extraction from DOC successful.")
-    #         return text.strip()
-    #     except Exception as e:
-    #         logger.error(f"Error extracting text from DOC: {str(e)}")
-    #         return f'Error extracting text from DOC: {str(e)}'
-
-    def extract_text_from_image(self, file_path):
-        try:
-            logger.info(f"Extracting text from image file: {file_path}")
-            image = Image.open(file_path)
-            text = pytesseract.image_to_string(image)
-            logger.info("Text extraction from image successful.")
-            return text.strip()
-        except Exception as e:
-            logger.error(f"Error extracting text from image: {str(e)}")
-            return f'Error extracting text from image: {str(e)}'
 
     def format_text_to_html_paragraphs(self, text):
         """
