@@ -69,6 +69,7 @@ def extract_facility_name(text):
     
     matcher.add("FACILITY_NAME", [pattern])
     
+    
     # Process the text
     doc = nlp(text)
     
