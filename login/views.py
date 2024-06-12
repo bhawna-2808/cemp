@@ -56,8 +56,9 @@ class AddDocumentAPIView(APIView):
                     # print(entities)
                     facility_name = extract_facility_name(text)
                     print("Facility Name:", facility_name)
-                    
-                    
+    
+    
+                
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     text = self.extract_text_from_docx(file_path)
                 elif file.content_type == 'application/msword':

@@ -88,6 +88,7 @@ def extract_facility_name(text):
     
 
 
+
 # pattern = [{"LOWER": "owner", "FUZZY": True}]  # Create a list containing the pattern dictionary
                     # print(pattern)
                     # matcher = Matcher(nlp.vocab)
