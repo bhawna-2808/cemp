@@ -12,11 +12,17 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
-
-
+import openai
+import subprocess
+import spacy
+import re
+from spacy import displacy
+from spacy.matcher import Matcher
+from spaczz.matcher import FuzzyMatcher
+from login.entity import *
 # Set up logging
 logger = logging.getLogger(__name__)
-# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -24,16 +30,12 @@ class AddDocumentAPIView(APIView):
             files = request.FILES.getlist('files')
             file_details = []
 
-            # Define the directory where you want to save the files
             upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
-
-            # upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploaded_files')
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
                 logger.info(f"Created directory: {upload_dir}")
 
             for file in files:
-                # Save the file
                 file_path = os.path.join(upload_dir, file.name)
                 with default_storage.open(file_path, 'wb+') as destination:
                     for chunk in file.chunks():
@@ -41,27 +43,30 @@ class AddDocumentAPIView(APIView):
 
                 logger.info(f"Saved file to: {file_path}")
 
-                # Ensure the file exists after saving
                 if not os.path.exists(file_path):
                     logger.error(f"File not found after saving: {file_path}")
                     continue
 
-                # Generate the URL for the saved file
                 file_url = request.build_absolute_uri(settings.MEDIA_URL + 'uploaded_files/' + file.name)
 
-                # Extract text based on file type
                 text = ""
                 if file.content_type == 'application/pdf':
                     text = self.extract_text_from_pdf(file_path)
+                    # entities =  extract_entities_ner(text)
+                    # print(entities)
+                    facility_name = extract_facility_name(text)
+                    print("Facility Name:", facility_name)
+                    
+                    
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     text = self.extract_text_from_docx(file_path)
-                # elif file.content_type == 'application/msword':
-                #     text = self.extract_text_from_doc(file_path)
+                elif file.content_type == 'application/msword':
+                    text = self.extract_text_from_doc(file_path)
                 elif file.content_type.startswith('image/'):
                     text = self.extract_text_from_image(file_path)
                 else:
                     text = 'Unsupported file type for text extraction.'
-                
+
                 text_html = self.format_text_to_html_paragraphs(text)
 
                 file_details.append({
@@ -70,7 +75,7 @@ class AddDocumentAPIView(APIView):
                     'content_type': file.content_type,
                     'path': file_path,
                     'url': file_url,
-                    'text': text_html
+                    'text': text_html,
                 })
 
             file_list_url = request.build_absolute_uri(reverse('file-list'))
@@ -84,15 +89,12 @@ class AddDocumentAPIView(APIView):
             text = ""
             logger.info(f"Extracting text from PDF file: {file_path}")
 
-            # Open the PDF file using PyMuPDF
             pdf_document = fitz.open(file_path)
 
-            # Iterate over each page
             for page_num in range(len(pdf_document)):
                 page = pdf_document.load_page(page_num)
                 page_text = page.get_text()
 
-                # Extract text from images using OCR
                 image_list = page.get_images(full=True)
                 for img in image_list:
                     xref = img[0]
@@ -100,71 +102,74 @@ class AddDocumentAPIView(APIView):
                     image_bytes = base_image["image"]
                     image = Image.open(io.BytesIO(image_bytes))
                     image_text = pytesseract.image_to_string(image)
-                    text += image_text.strip() + '\n'
+                    page_text += image_text.strip() + '\n'
 
-                # Append page text to the result
                 text += page_text.strip() + '\n'
-
-                # Log progress
                 logger.info(f"Processed page {page_num + 1} of {len(pdf_document)}")
 
             logger.info("Text extraction from PDF successful.")
             return text.strip()
         except Exception as e:
             logger.error(f"Error extracting text from PDF: {str(e)}")
-            return f'Error extracting text from PDF: {str(e)}'
+            return f'Error extracting text from PDF: {str(e)}', []
+
+    def extract_text_from_doc(self, file_path):
+        try:
+            logger.info(f"Extracting text from DOC file: {file_path}")
+
+            if not os.path.exists(file_path):
+                logger.error(f"File not found: {file_path}")
+                return f'File not found: {file_path}', []
+
+            # Use antiword for text extraction
+            result = subprocess.run(['antiword', file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            if result.returncode != 0:
+                logger.error(f"Error extracting text from DOC: {result.stderr}")
+                return f'Error extracting text from DOC: {result.stderr}', []
+
+            text = result.stdout
+            logger.info("Text extraction from DOC successful.")
+            return text.strip()
+        except Exception as e:
+            logger.error(f"Error extracting text from DOC: {str(e)}")
+            return f'Error extracting text from DOC: {str(e)}', []
 
     def extract_text_from_docx(self, file_path):
         try:
             logger.info(f"Extracting text from DOCX file: {file_path}")
 
-            # Check if the file exists
             if not os.path.exists(file_path):
                 logger.error(f"File not found: {file_path}")
-                return f'File not found: {file_path}'
+                return f'File not found: {file_path}', []
 
-            # Convert to absolute path
-            absolute_file_path = os.path.abspath(file_path)
-            logger.info(f"Using absolute path: {absolute_file_path}")
-
-            # Ensure the file is readable
-            if not os.access(absolute_file_path, os.R_OK):
-                logger.error(f"File is not readable: {absolute_file_path}")
-                return f'File is not readable: {absolute_file_path}'
-
-            # Open the DOCX file
-            try:
-                doc = Document(absolute_file_path)
-            except Exception as e:
-                logger.error(f"Error opening DOCX file with Document(): {str(e)}")
-                return f'Error opening DOCX file with Document(): {str(e)}'
-
-            # Extract text from paragraphs
-            text = ""
-            for para in doc.paragraphs:
-                text += para.text + '\n'
-
+            doc = Document(file_path)
+            text = "\n".join(para.text for para in doc.paragraphs)
             logger.info("Text extraction from DOCX successful.")
             return text.strip()
         except Exception as e:
             logger.error(f"Error extracting text from DOCX: {str(e)}")
-            return f'Error extracting text from DOCX: {str(e)}'
+            return f'Error extracting text from DOCX: {str(e)}', []
+
+    def extract_text_from_image(self, file_path):
+        try:
+            logger.info(f"Extracting text from image file: {file_path}")
+
+            image = Image.open(file_path)
+            text = pytesseract.image_to_string(image)
+            logger.info("Text extraction from image successful.")
+            return text.strip()
+        except Exception as e:
+            logger.error(f"Error extracting text from image: {str(e)}")
+            return f'Error extracting text from image: {str(e)}', []
 
     def format_text_to_html_paragraphs(self, text):
-        """
-        This function takes a string with newline characters and replaces them with HTML tags for paragraphs and line breaks.
-
-        Parameters:
-        text (str): The input string with newline characters.
-
-        Returns:
-        str: The formatted string with HTML tags.
-        """
-        # Split the text by double newline characters to separate paragraphs
-        paragraphs = text.split('\n\n')
-        # Wrap each paragraph in <p> tags and replace single newlines with <br>
-        formatted_text = ''.join('<p>{}</p>'.format(paragraph.replace("\n", "<br>")) for paragraph in paragraphs)
-        return formatted_text
+        if isinstance(text, str):
+            paragraphs = text.split('\n\n')
+            formatted_text = ''.join('<p>{}</p>'.format(paragraph.replace("\n", "<br>")) for paragraph in paragraphs)
+            return formatted_text
+        else:
+            return 'Invalid text format.'
 
 def file_list_view(request):
     upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploaded_files')
