@@ -12,7 +12,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
-import openai
+
 import subprocess
 import spacy
 import re
