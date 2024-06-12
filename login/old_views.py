@@ -107,6 +107,7 @@ class AddDocumentAPIView(APIView):
             logger.error(e)
             return f'Error extracting text from DOCX: {str(e)}'
 
+
     def extract_text_from_image(self, file_path):
         try:
             image = Image.open(file_path)
