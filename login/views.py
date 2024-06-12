@@ -35,6 +35,7 @@ class AddDocumentAPIView(APIView):
                 os.makedirs(upload_dir)
                 logger.info(f"Created directory: {upload_dir}")
 
+
             for file in files:
                 file_path = os.path.join(upload_dir, file.name)
                 with default_storage.open(file_path, 'wb+') as destination:
