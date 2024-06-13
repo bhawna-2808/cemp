@@ -181,6 +181,7 @@ class AddDocumentAPIView(APIView):
             text = pytesseract.image_to_string(thresh, config=config)
             # text = pytesseract.image_to_string(img)
             
+            
             logger.info("Text extraction from image successful.")
             return text.strip()
         except Exception as e:
