@@ -23,7 +23,7 @@ from spaczz.matcher import FuzzyMatcher
 from login.entity import *
 # Set up logging
 logger = logging.getLogger(__name__)
-pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
