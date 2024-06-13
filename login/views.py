@@ -140,6 +140,7 @@ class AddDocumentAPIView(APIView):
             logger.error(f"Error extracting text from DOC: {str(e)}")
             return f'Error extracting text from DOC: {str(e)}', []
 
+
     def extract_text_from_docx(self, file_path):
         try:
             
