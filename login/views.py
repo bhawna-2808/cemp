@@ -142,6 +142,7 @@ class AddDocumentAPIView(APIView):
 
     def extract_text_from_docx(self, file_path):
         try:
+            
             logger.info(f"Extracting text from DOCX file: {file_path}")
 
             if not os.path.exists(file_path):
