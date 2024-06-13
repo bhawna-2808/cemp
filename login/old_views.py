@@ -107,6 +107,10 @@ class AddDocumentAPIView(APIView):
             logger.error(e)
             return f'Error extracting text from DOCX: {str(e)}'
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 65dca7953e43a17f9490db0bf4813ef2cca0c3df
     def extract_text_from_image(self, file_path):
         try:
             image = Image.open(file_path)
