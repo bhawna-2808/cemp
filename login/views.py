@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 
 
+
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
         try:
@@ -176,13 +177,10 @@ class AddDocumentAPIView(APIView):
 
             #  Optional: Additional preprocessing steps like skew correction or layout analysis
 
-
-
             # Text extraction with Tesseract
             text = pytesseract.image_to_string(thresh, config=config)
             # text = pytesseract.image_to_string(img)
-            
-            
+
             logger.info("Text extraction from image successful.")
             return text.strip()
         except Exception as e:
