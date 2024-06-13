@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 
->>>>>>> 65dca7953e43a17f9490db0bf4813ef2cca0c3df
 import os
 import io
 import fitz  # PyMuPDF
@@ -27,12 +24,8 @@ from spaczz.matcher import FuzzyMatcher
 from login.entity import *
 # Set up logging
 logger = logging.getLogger(__name__)
-<<<<<<< HEAD
 # pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
-=======
-pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 
->>>>>>> 65dca7953e43a17f9490db0bf4813ef2cca0c3df
 
 
 class AddDocumentAPIView(APIView):
@@ -150,10 +143,6 @@ class AddDocumentAPIView(APIView):
 
     def extract_text_from_docx(self, file_path):
         try:
-<<<<<<< HEAD
-=======
-            
->>>>>>> 65dca7953e43a17f9490db0bf4813ef2cca0c3df
             logger.info(f"Extracting text from DOCX file: {file_path}")
 
             if not os.path.exists(file_path):
@@ -192,11 +181,7 @@ class AddDocumentAPIView(APIView):
             # Text extraction with Tesseract
             text = pytesseract.image_to_string(thresh, config=config)
             # text = pytesseract.image_to_string(img)
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 65dca7953e43a17f9490db0bf4813ef2cca0c3df
             logger.info("Text extraction from image successful.")
             return text.strip()
         except Exception as e:
@@ -223,7 +208,4 @@ def file_list_view(request):
                 'path': file_path
             })
     return JsonResponse({'files': files})
-<<<<<<< HEAD
-=======
 
->>>>>>> 65dca7953e43a17f9490db0bf4813ef2cca0c3df
