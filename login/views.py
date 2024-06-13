@@ -1,6 +1,3 @@
-
-13th June views.py
-
 import os
 import io
 import fitz  # PyMuPDF
