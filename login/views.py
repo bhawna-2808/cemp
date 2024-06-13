@@ -22,9 +22,14 @@ from spacy import displacy
 from spacy.matcher import Matcher
 from spaczz.matcher import FuzzyMatcher
 from login.entity import *
+import easyocr
+import certifi
+
 # Set up logging
 logger = logging.getLogger(__name__)
 # pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -78,7 +83,7 @@ class AddDocumentAPIView(APIView):
                     'content_type': file.content_type,
                     'path': file_path,
                     'url': file_url,
-                    'text': text_html,
+                    'text': text_html,  
                 })
 
             file_list_url = request.build_absolute_uri(reverse('file-list'))
@@ -156,20 +161,39 @@ class AddDocumentAPIView(APIView):
             logger.error(f"Error extracting text from DOCX: {str(e)}")
             return f'Error extracting text from DOCX: {str(e)}', []
 
+    # def extract_text_from_image(self, file_path):
+    #     try:
+    #         logger.info(f"Extracting text from image file: {file_path}")
+
+    #         img = Image.open(file_path)
+            
+    #         text = pytesseract.image_to_string(img)
+    #         # text = pytesseract.image_to_string(img)
+
+    #         logger.info("Text extraction from image successful.")
+    #         return text.strip()
+    #     except Exception as e:
+    #         logger.error(f"Error extracting text from image: {str(e)}")
+    #         return f'Error extracting text from image: {str(e)}', []
+        
     def extract_text_from_image(self, file_path):
         try:
             logger.info(f"Extracting text from image file: {file_path}")
 
-            img = Image.open(file_path)
-            
-            text = pytesseract.image_to_string(img)
-            # text = pytesseract.image_to_string(img)
+            # Initialize EasyOCR reader
+            reader = easyocr.Reader(['en'])
+
+            # Read the image using EasyOCR
+            results = reader.readtext(file_path)
+
+            # Extract and concatenate text
+            text = "\n".join([text for _, text, _ in results])
 
             logger.info("Text extraction from image successful.")
             return text.strip()
         except Exception as e:
             logger.error(f"Error extracting text from image: {str(e)}")
-            return f'Error extracting text from image: {str(e)}', []
+            return f'Error extracting text from image: {str(e)}'
 
     def format_text_to_html_paragraphs(self, text):
         if isinstance(text, str):
