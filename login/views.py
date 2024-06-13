@@ -12,7 +12,8 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
-
+import cv2
+import numpy as np
 import subprocess
 import spacy
 import re
@@ -22,7 +23,7 @@ from spaczz.matcher import FuzzyMatcher
 from login.entity import *
 # Set up logging
 logger = logging.getLogger(__name__)
-# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -152,12 +153,31 @@ class AddDocumentAPIView(APIView):
             logger.error(f"Error extracting text from DOCX: {str(e)}")
             return f'Error extracting text from DOCX: {str(e)}', []
 
-    def extract_text_from_image(self, file_path):
+    def extract_text_from_image(self, file_path, config='--psm 6',grayscale=True):
         try:
             logger.info(f"Extracting text from image file: {file_path}")
 
-            image = Image.open(file_path)
-            text = pytesseract.image_to_string(image)
+            img = Image.open(file_path)
+             # Preprocessing (adjust based on image characteristics)
+            if grayscale:
+                img = img.convert('L')  # Convert to grayscale
+
+            # Logging for debugging
+            logger.info(f"Image shape after grayscale conversion: {img.size}")
+            logger.info(f"Image data type after grayscale conversion: {img.mode}")
+                # Noise reduction (example)
+            # Apply a median filter to reduce noise
+            img = cv2.medianBlur(np.array(img), 3)
+            # Binarization (example)
+            # Convert to binary image for better text extraction
+            thresh = cv2.threshold(np.array(img), 127, 255, cv2.THRESH_BINARY)[1]
+
+            #  Optional: Additional preprocessing steps like skew correction or layout analysis
+
+            # Text extraction with Tesseract
+            text = pytesseract.image_to_string(thresh, config=config)
+            # text = pytesseract.image_to_string(img)
+            
             logger.info("Text extraction from image successful.")
             return text.strip()
         except Exception as e:
