@@ -177,6 +177,7 @@ class AddDocumentAPIView(APIView):
             #  Optional: Additional preprocessing steps like skew correction or layout analysis
 
 
+
             # Text extraction with Tesseract
             text = pytesseract.image_to_string(thresh, config=config)
             # text = pytesseract.image_to_string(img)
