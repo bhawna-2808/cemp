@@ -57,10 +57,10 @@ class AddDocumentAPIView(APIView):
             url = "https://doc.evergreenbraindev.com/public/file-page"
             form_data = self.get_form_data_from_url(url)
             files = request.FILES.getlist('files')
-            markerss = request.POST.getlist('marker_value[]')  # Get list of marker values
+            markers = request.POST.getlist('marker_value[]')  # Get list of marker values
 
             file_details = []
-            markers = ["email", "address", "facility"]
+            # markers = ["email", "address", "facility"]
             upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
@@ -99,8 +99,8 @@ class AddDocumentAPIView(APIView):
                     text = self.extract_text_from_image(file_path)
                 else:
                     text = 'Unsupported file type for text extraction.'
-                found_markers = self.search_markers(text, markers)
-                print(found_markers)
+                # found_markers = self.search_markers(text, markers)
+                # print(found_markers)
                 text_html = self.format_text_to_html_paragraphs(text)
 
                 file_details.append({
@@ -114,7 +114,7 @@ class AddDocumentAPIView(APIView):
                 })
 
             file_list_url = request.build_absolute_uri(reverse('file-list'))
-            return Response({"message": "Files uploaded successfully", "files": file_details, "file_list_url": file_list_url, markerss:markerss}, status=status.HTTP_201_CREATED)
+            return Response({"message": "Files uploaded successfully", "files": file_details, "file_list_url": file_list_url, markers:markers}, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(e)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
