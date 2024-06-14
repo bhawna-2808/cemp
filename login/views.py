@@ -46,7 +46,7 @@ class AddDocumentAPIView(APIView):
             form_data = self.get_form_data_from_url(url)
             files = request.FILES.getlist('files')
             markers = request.POST.getlist('marker_value[]')  # Get list of marker values
-
+            print(markers)
             file_details = []
             upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
             if not os.path.exists(upload_dir):
