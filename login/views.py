@@ -30,7 +30,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging
 logger = logging.getLogger(__name__)
-pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
 
