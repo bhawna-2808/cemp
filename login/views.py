@@ -42,11 +42,12 @@ class AddDocumentAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            url = "https://doc.evergreenbraindev.com/public/file-page"
+            url = "https://doc.evergreenbraindev.com/public/file-page"  
             form_data = self.get_form_data_from_url(url)
             files = request.FILES.getlist('files')
-            markers = request.POST.getlist('marker_value[]')  # Get list of marker values
+            markers = request.POST.getlist('marker_value')  # Get list of marker values
             print(markers)
+            print(request.POST)
             file_details = []
             upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
             if not os.path.exists(upload_dir):
@@ -80,6 +81,7 @@ class AddDocumentAPIView(APIView):
                     text = 'Unsupported file type for text extraction.'
 
                 found_markers = self.search_markers(text, markers)
+                print(found_markers)
                 text_html = self.format_text_to_html_paragraphs(text)
 
                 file_details.append({
