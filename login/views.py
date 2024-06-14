@@ -38,21 +38,7 @@ class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
         try:
             url = "https://doc.evergreenbraindev.com/public/file-page"
-            response = requests.get(url)
-            print(response)
-            # Parse the HTML content
-            soup = BeautifulSoup(response.content, 'html.parser')
-
-            # Extract form data values
-            form_data = {}
-            for input_tag in soup.find_all('input'):
-                name = input_tag.get('name')
-                value = input_tag.get('value', '')
-                form_data[name] = value
-            print(form_data)
-            # return {"form_data": form_data}, 200
-            # response = request.get(external_api_url)
-            # print(response)
+            form_data = self.get_form_data_from_url(url)
             files = request.FILES.getlist('files')
             file_details = []
             markers = ["email", "address", "facility"]
