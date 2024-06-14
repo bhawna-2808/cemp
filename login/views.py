@@ -89,7 +89,7 @@ class AddDocumentAPIView(APIView):
                     'path': file_path,
                     'url': file_url,
                     'text': text_html,
-                    'markers_found': found_markers,
+                    'markers_found': markers,
                     'form_data': form_data
                 })
 
