@@ -24,22 +24,38 @@ from spaczz.matcher import FuzzyMatcher
 from login.entity import *
 import easyocr
 import certifi
+import requests
+from bs4 import BeautifulSoup
+
 
 # Set up logging
 logger = logging.getLogger(__name__)
-# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
 
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
         try:
-            # external_api_url = "https://doc.evergreenbraindev.com/public/file-page"
+            url = "https://doc.evergreenbraindev.com/public/file-page"
+            response = requests.get(url)
+            print(response)
+            # Parse the HTML content
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            # Extract form data values
+            form_data = {}
+            for input_tag in soup.find_all('input'):
+                name = input_tag.get('name')
+                value = input_tag.get('value', '')
+                form_data[name] = value
+            print(form_data)
+            # return {"form_data": form_data}, 200
             # response = request.get(external_api_url)
             # print(response)
             files = request.FILES.getlist('files')
             file_details = []
-
+            markers = ["email", "address", "facility"]
             upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
@@ -62,6 +78,7 @@ class AddDocumentAPIView(APIView):
                 text = ""
                 if file.content_type == 'application/pdf':
                     text = self.extract_text_from_pdf(file_path)
+                    #search data in respect of marker...
                     # entities =  extract_entities_ner(text)
                     # print(entities)
                     facility_name = extract_facility_name(text)
@@ -77,7 +94,8 @@ class AddDocumentAPIView(APIView):
                     text = self.extract_text_from_image(file_path)
                 else:
                     text = 'Unsupported file type for text extraction.'
-
+                found_markers = self.search_markers(text, markers)
+                print(found_markers)
                 text_html = self.format_text_to_html_paragraphs(text)
 
                 file_details.append({
@@ -146,7 +164,25 @@ class AddDocumentAPIView(APIView):
             logger.error(f"Error extracting text from DOC: {str(e)}")
             return f'Error extracting text from DOC: {str(e)}', []
 
-
+    def search_markers(self, text, markers):
+        found_markers = {}
+        for marker in markers:
+            if marker == "address":
+                # Define a regex pattern to capture an address (this is an example and may need adjustment)
+                pattern = re.compile(r'\b(address\s*:?\s*)([\w\s,.-]+)', re.IGNORECASE)
+            elif marker == "email":
+                # Define a regex pattern to capture an email address
+                pattern = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
+            elif marker == "facility":
+                #     Pattern for facility names ending with 'facility'
+                pattern = re.compile(r'\b([\w\s]+ facility)\b', re.IGNORECASE)
+            matches = pattern.findall(text)
+            if marker == "address":
+                found_markers[marker] = [match[1] for match in matches]
+            else:
+                found_markers[marker] = matches
+        return found_markers
+    
     def extract_text_from_docx(self, file_path):
         try:
             
