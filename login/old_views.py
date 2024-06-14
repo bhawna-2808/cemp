@@ -12,7 +12,15 @@ from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
-from io import BytesIO
+import cv2
+import numpy as np
+import subprocess
+import spacy
+import re
+from spacy import displacy
+from spacy.matcher import Matcher
+from spaczz.matcher import FuzzyMatcher
+from login.entity import *
 
 # Set up logging
 logger = logging.getLogger(__name__)

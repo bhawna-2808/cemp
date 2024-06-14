@@ -5,21 +5,32 @@ import pytesseract
 from PIL import Image
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.http import JsonResponse
 from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
+import cv2
+import numpy as np
+import subprocess
+import spacy
+import re
+from spacy import displacy
+from spacy.matcher import Matcher
+from spaczz.matcher import FuzzyMatcher
+from login.entity import *
 import certifi
 import requests
 from bs4 import BeautifulSoup
-import easyocr
-import re
-from django.http import JsonResponse
 # Set up logging
 logger = logging.getLogger(__name__)
 os.environ['SSL_CERT_FILE'] = certifi.where()
+
+# pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'  # Update the path based on your server configuration
+pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract' 
+
 
 class AddDocumentAPIView(APIView):
     
@@ -47,7 +58,6 @@ class AddDocumentAPIView(APIView):
             files = request.FILES.getlist('files')
             markers = request.POST.getlist('marker_value')  # Get list of marker values
             print(markers)
-            print(request.POST)
             file_details = []
             upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
             if not os.path.exists(upload_dir):
@@ -100,6 +110,7 @@ class AddDocumentAPIView(APIView):
                 "message": "Files uploaded successfully",
                 "files": file_details,
                 "file_list_url": file_list_url,
+                "found_markers":found_markers
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -192,18 +203,36 @@ class AddDocumentAPIView(APIView):
 
     def search_markers(self, text, markers):
         found_markers = {}
+
         for marker in markers:
             if marker == "address":
                 pattern = re.compile(r'\b(address\s*:?\s*)([\w\s,.-]+)', re.IGNORECASE)
-            elif marker == "email":
+            elif marker == "Email":
                 pattern = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
             elif marker == "facility":
                 pattern = re.compile(r'\b([\w\s]+ facility)\b', re.IGNORECASE)
-            matches = pattern.findall(text)
-            if marker == "address":
-                found_markers[marker] = [match[1] for match in matches]
+            elif marker == "Owner":
+                pattern = re.compile(
+                    r'([\w\s]+)\s*\(Owner/Administrator\)\s*([\d\s\w,.-]+)\s*Phone:\s*(©?\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\s*Email:\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})',
+                    re.IGNORECASE
+                )
+            elif marker == "acha_license":
+                pattern = re.compile(r'\bacha_license\s*:?\s*([\w\s-]+)', re.IGNORECASE)    
+            elif marker == "beds":
+                pattern = re.compile(r'\bbeds\s*:?\s*(\d+)', re.IGNORECASE)
+            elif marker == "contact_person":
+                pattern = re.compile(r'\bcontact person\s*:?\s*([\w\s]+)', re.IGNORECASE)    
+            elif marker == "alternate_person_in_charge":
+                pattern = re.compile(
+                    r'Alternate Person-in-Charge:\s*([\w\s]+)\s*([\d\s\w,.-]+)\s*Phone:\s*\(?W\)?\/?\s?©?\s?(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\s*\(H\)\s*NA\s*Email:\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})',
+                    re.IGNORECASE
+                )
             else:
-                found_markers[marker] = matches
+                continue  # Skip unknown markers
+
+            matches = pattern.findall(text) 
+            found_markers[marker] = matches
+
         return found_markers
 
     def format_text_to_html_paragraphs(self, text):
