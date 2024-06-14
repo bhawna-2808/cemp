@@ -35,6 +35,23 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 
 
 class AddDocumentAPIView(APIView):
+    def get_form_data_from_url(self, url):
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise HTTPError for bad responses
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            form_data = {}
+            for input_tag in soup.find_all('input'):
+                name = input_tag.get('name')
+                value = input_tag.get('value', '')
+                form_data[name] = value
+
+            return form_data
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching form data: {e}")
+            return {}
+        
     def post(self, request, *args, **kwargs):
         try:
             url = "https://doc.evergreenbraindev.com/public/file-page"
