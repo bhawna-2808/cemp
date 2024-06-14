@@ -34,9 +34,9 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 class AddDocumentAPIView(APIView):
     def post(self, request, *args, **kwargs):
         try:
-            external_api_url = "https://doc.evergreenbraindev.com/public/file-page"
-            response = request.get(external_api_url)
-            print(response)
+            # external_api_url = "https://doc.evergreenbraindev.com/public/file-page"
+            # response = request.get(external_api_url)
+            # print(response)
             files = request.FILES.getlist('files')
             file_details = []
 
