@@ -105,6 +105,7 @@ class AddDocumentAPIView(APIView):
                     'path': file_path,
                     'url': file_url,
                     'text': text_html,  
+                    'form_data':form_data
                 })
 
             file_list_url = request.build_absolute_uri(reverse('file-list'))
