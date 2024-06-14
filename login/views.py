@@ -1,4 +1,3 @@
-
 import os
 import io
 import fitz  # PyMuPDF
@@ -6,35 +5,24 @@ import pytesseract
 from PIL import Image
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.http import JsonResponse
 from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from docx import Document
 import logging
-import cv2
-import numpy as np
-import subprocess
-import spacy
-import re
-from spacy import displacy
-from spacy.matcher import Matcher
-from spaczz.matcher import FuzzyMatcher
-from login.entity import *
-import easyocr
 import certifi
 import requests
 from bs4 import BeautifulSoup
-
-
+import easyocr
+import re
+from django.http import JsonResponse
 # Set up logging
 logger = logging.getLogger(__name__)
-# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
-
 class AddDocumentAPIView(APIView):
+    
     def get_form_data_from_url(self, url):
         try:
             response = requests.get(url)
@@ -51,7 +39,7 @@ class AddDocumentAPIView(APIView):
         except requests.exceptions.RequestException as e:
             logger.error(f"Error fetching form data: {e}")
             return {}
-        
+
     def post(self, request, *args, **kwargs):
         try:
             url = "https://doc.evergreenbraindev.com/public/file-page"
@@ -60,7 +48,6 @@ class AddDocumentAPIView(APIView):
             markers = request.POST.getlist('marker_value[]')  # Get list of marker values
 
             file_details = []
-            # markers = ["email", "address", "facility"]
             upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
             if not os.path.exists(upload_dir):
                 os.makedirs(upload_dir)
@@ -83,14 +70,6 @@ class AddDocumentAPIView(APIView):
                 text = ""
                 if file.content_type == 'application/pdf':
                     text = self.extract_text_from_pdf(file_path)
-                    #search data in respect of marker...
-                    # entities =  extract_entities_ner(text)
-                    # print(entities)
-                    facility_name = extract_facility_name(text)
-                    print("Facility Name:", facility_name)
-    
-    
-                
                 elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                     text = self.extract_text_from_docx(file_path)
                 elif file.content_type == 'application/msword':
@@ -99,8 +78,8 @@ class AddDocumentAPIView(APIView):
                     text = self.extract_text_from_image(file_path)
                 else:
                     text = 'Unsupported file type for text extraction.'
-                # found_markers = self.search_markers(text, markers)
-                # print(found_markers)
+
+                found_markers = self.search_markers(text, markers)
                 text_html = self.format_text_to_html_paragraphs(text)
 
                 file_details.append({
@@ -109,14 +88,20 @@ class AddDocumentAPIView(APIView):
                     'content_type': file.content_type,
                     'path': file_path,
                     'url': file_url,
-                    'text': text_html,  
-                    'form_data':form_data
+                    'text': text_html,
+                    'markers_found': found_markers,
+                    'form_data': form_data
                 })
 
             file_list_url = request.build_absolute_uri(reverse('file-list'))
-            return Response({"message": "Files uploaded successfully", "files": file_details, "file_list_url": file_list_url, markers:markers}, status=status.HTTP_201_CREATED)
+            return Response({
+                "message": "Files uploaded successfully",
+                "files": file_details,
+                "file_list_url": file_list_url,
+            }, status=status.HTTP_201_CREATED)
+
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error processing files: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def extract_text_from_pdf(self, file_path):
@@ -144,9 +129,27 @@ class AddDocumentAPIView(APIView):
 
             logger.info("Text extraction from PDF successful.")
             return text.strip()
+
         except Exception as e:
             logger.error(f"Error extracting text from PDF: {str(e)}")
-            return f'Error extracting text from PDF: {str(e)}', []
+            return f'Error extracting text from PDF: {str(e)}'
+
+    def extract_text_from_docx(self, file_path):
+        try:
+            logger.info(f"Extracting text from DOCX file: {file_path}")
+
+            if not os.path.exists(file_path):
+                logger.error(f"File not found: {file_path}")
+                return f'File not found: {file_path}'
+
+            doc = Document(file_path)
+            text = "\n".join(para.text for para in doc.paragraphs)
+            logger.info("Text extraction from DOCX successful.")
+            return text.strip()
+
+        except Exception as e:
+            logger.error(f"Error extracting text from DOCX: {str(e)}")
+            return f'Error extracting text from DOCX: {str(e)}'
 
     def extract_text_from_doc(self, file_path):
         try:
@@ -154,33 +157,45 @@ class AddDocumentAPIView(APIView):
 
             if not os.path.exists(file_path):
                 logger.error(f"File not found: {file_path}")
-                return f'File not found: {file_path}', []
+                return f'File not found: {file_path}'
 
-            # Use antiword for text extraction
             result = subprocess.run(['antiword', file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
             if result.returncode != 0:
                 logger.error(f"Error extracting text from DOC: {result.stderr}")
-                return f'Error extracting text from DOC: {result.stderr}', []
+                return f'Error extracting text from DOC: {result.stderr}'
 
             text = result.stdout
             logger.info("Text extraction from DOC successful.")
             return text.strip()
+
         except Exception as e:
             logger.error(f"Error extracting text from DOC: {str(e)}")
-            return f'Error extracting text from DOC: {str(e)}', []
+            return f'Error extracting text from DOC: {str(e)}'
+
+    def extract_text_from_image(self, file_path):
+        try:
+            logger.info(f"Extracting text from image file: {file_path}")
+
+            reader = easyocr.Reader(['en'])
+            results = reader.readtext(file_path)
+            text = "\n".join([text for _, text, _ in results])
+
+            logger.info("Text extraction from image successful.")
+            return text.strip()
+
+        except Exception as e:
+            logger.error(f"Error extracting text from image: {str(e)}")
+            return f'Error extracting text from image: {str(e)}'
 
     def search_markers(self, text, markers):
         found_markers = {}
         for marker in markers:
             if marker == "address":
-                # Define a regex pattern to capture an address (this is an example and may need adjustment)
                 pattern = re.compile(r'\b(address\s*:?\s*)([\w\s,.-]+)', re.IGNORECASE)
             elif marker == "email":
-                # Define a regex pattern to capture an email address
                 pattern = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
             elif marker == "facility":
-                #     Pattern for facility names ending with 'facility'
                 pattern = re.compile(r'\b([\w\s]+ facility)\b', re.IGNORECASE)
             matches = pattern.findall(text)
             if marker == "address":
@@ -188,57 +203,6 @@ class AddDocumentAPIView(APIView):
             else:
                 found_markers[marker] = matches
         return found_markers
-    
-    def extract_text_from_docx(self, file_path):
-        try:
-            
-            logger.info(f"Extracting text from DOCX file: {file_path}")
-
-            if not os.path.exists(file_path):
-                logger.error(f"File not found: {file_path}")
-                return f'File not found: {file_path}', []
-
-            doc = Document(file_path)
-            text = "\n".join(para.text for para in doc.paragraphs)
-            logger.info("Text extraction from DOCX successful.")
-            return text.strip()
-        except Exception as e:
-            logger.error(f"Error extracting text from DOCX: {str(e)}")
-            return f'Error extracting text from DOCX: {str(e)}', []
-
-    # def extract_text_from_image(self, file_path):
-    #     try:
-    #         logger.info(f"Extracting text from image file: {file_path}")
-
-    #         img = Image.open(file_path)
-            
-    #         text = pytesseract.image_to_string(img)
-    #         # text = pytesseract.image_to_string(img)
-
-    #         logger.info("Text extraction from image successful.")
-    #         return text.strip()
-    #     except Exception as e:
-    #         logger.error(f"Error extracting text from image: {str(e)}")
-    #         return f'Error extracting text from image: {str(e)}', []
-        
-    def extract_text_from_image(self, file_path):
-        try:
-            logger.info(f"Extracting text from image file: {file_path}")
-
-            # Initialize EasyOCR reader
-            reader = easyocr.Reader(['en'])
-
-            # Read the image using EasyOCR
-            results = reader.readtext(file_path)
-
-            # Extract and concatenate text
-            text = "\n".join([text for _, text, _ in results])
-
-            logger.info("Text extraction from image successful.")
-            return text.strip()
-        except Exception as e:
-            logger.error(f"Error extracting text from image: {str(e)}")
-            return f'Error extracting text from image: {str(e)}'
 
     def format_text_to_html_paragraphs(self, text):
         if isinstance(text, str):
@@ -247,6 +211,7 @@ class AddDocumentAPIView(APIView):
             return formatted_text
         else:
             return 'Invalid text format.'
+
 
 def file_list_view(request):
     upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploaded_files')
