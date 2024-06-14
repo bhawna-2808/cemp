@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
 # pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'  # Update the path based on your server configuration
-pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract' 
+# pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract' 
 
 
 class AddDocumentAPIView(APIView):
