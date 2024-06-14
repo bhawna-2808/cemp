@@ -57,7 +57,7 @@ class AddDocumentAPIView(APIView):
             url = "https://doc.evergreenbraindev.com/public/file-page"
             form_data = self.get_form_data_from_url(url)
             files = request.FILES.getlist('files')
-            markers = request.POST.getlist('marker_value[]')  # Get list of marker values
+            markerss = request.POST.getlist('marker_value[]')  # Get list of marker values
 
             file_details = []
             markers = ["email", "address", "facility"]
@@ -114,7 +114,7 @@ class AddDocumentAPIView(APIView):
                 })
 
             file_list_url = request.build_absolute_uri(reverse('file-list'))
-            return Response({"message": "Files uploaded successfully", "files": file_details, "file_list_url": file_list_url, markers:markers}, status=status.HTTP_201_CREATED)
+            return Response({"message": "Files uploaded successfully", "files": file_details, "file_list_url": file_list_url, markerss:markerss}, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(e)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
