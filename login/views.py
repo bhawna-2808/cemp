@@ -35,30 +35,30 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 
 class AddDocumentAPIView(APIView):
     
-    def get_form_data_from_url(self, url):
-        try:
-            response = requests.get(url)
-            response.raise_for_status()  # Raise HTTPError for bad responses
-            soup = BeautifulSoup(response.content, 'html.parser')
+    # def get_form_data_from_url(self, url):
+    #     try:
+    #         response = requests.get(url)
+    #         response.raise_for_status()  # Raise HTTPError for bad responses
+    #         soup = BeautifulSoup(response.content, 'html.parser')
             
-            form_data = {}
-            for input_tag in soup.find_all('input'):
-                name = input_tag.get('name')
-                value = input_tag.get('value', '')
-                form_data[name] = value
+    #         form_data = {}
+    #         for input_tag in soup.find_all('input'):
+    #             name = input_tag.get('name')
+    #             value = input_tag.get('value', '')
+    #             form_data[name] = value
 
-            return form_data
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error fetching form data: {e}")
-            return {}
+    #         return form_data
+    #     except requests.exceptions.RequestException as e:
+    #         logger.error(f"Error fetching form data: {e}")
+    #         return {}
 
     def post(self, request, *args, **kwargs):
         try:
-            url = "https://doc.evergreenbraindev.com/public/file-page"  
-            form_data = self.get_form_data_from_url(url)
+            # url = "https://doc.evergreenbraindev.com/public/file-page"  
+            # form_data = self.get_form_data_from_url(url)
             files = request.FILES.getlist('files')
-            markers = request.POST.getlist('marker_value')  # Get list of marker values
-            print(markers)
+            # markers = request.POST.getlist('marker_value')  # Get list of marker values
+            # print(markers)
             file_details = []
             upload_dir = os.path.join(settings.BASE_DIR, 'uploaded_files')
             if not os.path.exists(upload_dir):
@@ -91,8 +91,8 @@ class AddDocumentAPIView(APIView):
                 else:
                     text = 'Unsupported file type for text extraction.'
 
-                found_markers = self.search_markers(text, markers)
-                print(found_markers)
+                # found_markers = self.search_markers(text, markers)
+                # print(found_markers)
                 text_html = self.format_text_to_html_paragraphs(text)
 
                 file_details.append({
@@ -102,8 +102,6 @@ class AddDocumentAPIView(APIView):
                     'path': file_path,
                     'url': file_url,
                     'text': text_html,
-                    'markers_found': markers,
-                    'form_data': form_data
                 })
 
             file_list_url = request.build_absolute_uri(reverse('file-list'))
@@ -111,7 +109,6 @@ class AddDocumentAPIView(APIView):
                 "message": "Files uploaded successfully",
                 "files": file_details,
                 "file_list_url": file_list_url,
-                "found_markers":found_markers
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -223,7 +220,7 @@ class AddDocumentAPIView(APIView):
                 pattern = re.compile(r'\b(\d+)\s*bed[s]?\b', re.IGNORECASE)
 
             elif marker == "contact_person":
-                pattern = re.compile(r'\bcontact person\s*:?\s*([\w\s]+)', re.IGNORECASE)    
+                pattern = re.compile(r'contact person\s*:?\s*([\w\s]+)', re.IGNORECASE)    
             elif marker == "alternate_person_in_charge":
                 pattern = re.compile(
                     r'Alternate Person-in-Charge:\s*([\w\s]+)\s*([\d\s\w,.-]+)\s*Phone:\s*\(?W\)?\/?\s?©?\s?(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\s*\(H\)\s*NA\s*Email:\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})',
