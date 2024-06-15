@@ -24,6 +24,7 @@ from login.entity import *
 import certifi
 import requests
 from bs4 import BeautifulSoup
+import easyocr
 # Set up logging
 logger = logging.getLogger(__name__)
 os.environ['SSL_CERT_FILE'] = certifi.where()
@@ -211,15 +212,16 @@ class AddDocumentAPIView(APIView):
                 pattern = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
             elif marker == "facility":
                 pattern = re.compile(r'\b([\w\s]+ facility)\b', re.IGNORECASE)
-            elif marker == "Owner":
+            elif marker == "owner":
                 pattern = re.compile(
-                    r'([\w\s]+)\s*\(Owner/Administrator\)\s*([\d\s\w,.-]+)\s*Phone:\s*(©?\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\s*Email:\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})',
-                    re.IGNORECASE
-                )
+                r'\(Owner/Administrator\)\s*([\w\s]+)\s*(.*?)\s*Phone:\s*(©?\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\s*Email:\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})',
+                re.IGNORECASE | re.DOTALL
+            )
             elif marker == "acha_license":
                 pattern = re.compile(r'\bacha_license\s*:?\s*([\w\s-]+)', re.IGNORECASE)    
             elif marker == "beds":
-                pattern = re.compile(r'\bbeds\s*:?\s*(\d+)', re.IGNORECASE)
+                pattern = re.compile(r'\b(\d+)\s*bed[s]?\b', re.IGNORECASE)
+
             elif marker == "contact_person":
                 pattern = re.compile(r'\bcontact person\s*:?\s*([\w\s]+)', re.IGNORECASE)    
             elif marker == "alternate_person_in_charge":
